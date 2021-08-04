@@ -5,7 +5,7 @@
 # @Software: PyCharm
 
 from django.urls import path
-from users.views import RegisterView,ImageCodeView, SmsCodeView, LoginView, LogoutView, ForgetPasswordView, UserCenterView
+from users.views import RegisterView,ImageCodeView, SmsCodeView, LoginView, LogoutView, ForgetPasswordView, UserCenterView, WriteBlogView
 
 
 urlpatterns = [
@@ -16,4 +16,5 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),  # 退出登录
     path('forgetpassword/', ForgetPasswordView.as_view(), name='forgetpassword'),  # 忘记密码
     path('center/', UserCenterView.as_view(), name='center'),  # 个人中心
+    path('writeblog/', WriteBlogView.as_view(), name='writeblog'),  # 写博客的路由
 ]

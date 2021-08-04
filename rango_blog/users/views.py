@@ -18,6 +18,7 @@ from django.db import DatabaseError
 from django.urls import reverse
 from django.contrib.auth import logout
 from django.contrib.auth.mixins import LoginRequiredMixin
+from home.models import ArticleCategory, Article
 
 class RegisterView(View):
 
@@ -302,3 +303,51 @@ class UserCenterView(LoginRequiredMixin, View):
 
         # 5.返回响应
         return response
+
+
+class WriteBlogView(LoginRequiredMixin, View):
+
+    def get(self, request):
+
+        categories = ArticleCategory.objects.all() # 查询所有分类模型
+        context = {
+            'categories': categories
+        }
+        return render(request, 'write_blog.html', context=context)
+
+    def post(self, request):
+
+        # 1.接收数据
+        avatar = request.FILES.get('avatar')
+        title = request.POST.get('title')
+        category_id = request.POST.get('category')
+        tags = request.POST.get('tags')
+        summary = request.POST.get('summary')
+        content = request.POST.get('content')
+        user = request.user
+
+        # 2.验证数据
+        # 2.1 验证参数是否齐全
+        if not all([avatar, title, category_id, summary, content]):
+            return HttpResponseBadRequest('参数不全')
+        # 2.2 判断分类id
+        try:
+            category = ArticleCategory.objects.get(id=category_id)
+        except ArticleCategory.DoesNotExist:
+            return HttpResponseBadRequest('没有此分类')
+        # 3.数据入库
+        try:
+            article = Article.objects.create(
+                author=user,
+                avatar=avatar,
+                title=title,
+                category=category,
+                tags=tags,
+                summary=summary,
+                content=content
+            )
+        except Exception as e:
+            logger.error(e)
+            return HttpResponseBadRequest('发布失败，请稍后再试')
+        # 4.跳转到指定页面（暂时首页）
+        return redirect(reverse('home:index'))
