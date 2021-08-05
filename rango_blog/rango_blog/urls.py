@@ -23,6 +23,5 @@ urlpatterns = [
     path('', include(('users.urls', 'users'), namespace='users')),
     path('', include(('home.urls', 'home'), namespace='home')),
 ]
-
-# 图片访问的路由
+# Image access route
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

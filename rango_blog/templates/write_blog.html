@@ -1,12 +1,8 @@
 <!DOCTYPE html>
-<!-- 网站主语言 -->
-<html lang="zh-cn">
-
+<html lang="en">
 <head>
-    <!-- 网站采用的字符编码 -->
     <meta charset="utf-8">
-    <!-- 网站标题 -->
-    <title> 写文章 </title>
+    <title> Rango Blog </title>
     {% load staticfiles %}
     <!-- 引入bootstrap的css文件 -->
     <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
@@ -25,7 +21,7 @@
     <div class="container">
         <!-- 导航栏商标 -->
         <div>
-             <a class="navbar-brand" href="{% url 'home:index' %}">个人博客</a>
+             <a class="navbar-brand" href="{% url 'home:index' %}">Rango Blog</a>
         </div>
     </div>
     <!--登录/个人中心-->
@@ -59,7 +55,18 @@
                 <!-- 文章标题图 -->
                 <div class="form-group">
                     <label for="avatar">Title image</label>
-                    <input type="file" class="form-control-file" name="avatar" id="avatar" >
+
+                     <input type="file" class="form-control-file" name="avatar" id="avatar" />
+
+{#                    <input type="file" class="form-control-file" name="avatar" id="avatar" style="display:none" onchange="document.getElementById('inputFileAgent').value=this.value;"/>#}
+{#                    <input type="text" value="please select image" disabled id="inputFileAgent" />#}
+{#                    <input type="button" onclick="document.getElementById('avatar').click()" value="upload" />#}
+{#                    <script type="text/javascript">#}
+{#                        function changeAgentContent(){#}
+{#                            document.getElementById("avatarAgent").value = document.getElementById("avatar").value;#}
+{#                        }#}
+{#                    </script>#}
+
                 </div>
 
                 <!-- 文章标题 -->
@@ -98,12 +105,11 @@
                 <div class="form-group">
                     <label for="body">Article Body</label>
                     <!-- 文本区域 -->
-                    <!--<textarea type="text" class="form-control" id="body" name="body" rows="12"></textarea>-->
                     <textarea cols="40" id="id_body" name="content" rows="10" required data-processed="0" :data-config="data_config" data-external-plugin-resources="[]" data-id="id_body" data-type="ckeditortype">
                         </textarea>
                 </div>
                 <!-- 提交按钮 -->
-                <button type="submit" class="btn btn-primary">完成</button>
+                <button type="submit" class="btn btn-primary">Upload</button>
             </form>
         </div>
     </div>
@@ -116,6 +122,7 @@
     </div>
 </footer>
 </div>
+
 <!--ckeditor-->
 <script type="text/javascript" src="{% static 'ckeditor/ckeditor-init.js' %}" data-ckeditor-basepath="{% static 'ckeditor/ckeditor/' %}" id="ckeditor-init-script"></script>
 <script type="text/javascript" src="{% static 'ckeditor/ckeditor/ckeditor.js' %}"></script>

@@ -1,29 +1,25 @@
 from django.shortcuts import render, redirect
 from django.views import View
-
 from django.http import HttpResponseBadRequest, HttpResponse
-from libs.captcha.captcha import captcha
-from django_redis import get_redis_connection
-
 from django.http.response import JsonResponse
-from utils.response_code import RETCODE
-import logging
-logger = logging.getLogger('django')
-from random import randint
-from libs.yuntongxun.sms import CCP
-
-import re
-from users.models import User
-from django.db import DatabaseError
-from django.urls import reverse
+from django_redis import get_redis_connection
 from django.contrib.auth import logout
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import DatabaseError
+from django.urls import reverse
+from utils.response_code import RETCODE
+from libs.yuntongxun.sms import CCP
+from libs.captcha.captcha import captcha
 from home.models import ArticleCategory, Article
+from users.models import User
+from random import randint
+import re
+import logging
+logger = logging.getLogger('django')
+
 
 class RegisterView(View):
-
-    def get(self,request):
-
+    def get(self, request):
         return render(request, 'register.html')
 
     def post(self, request):
@@ -53,7 +49,6 @@ class RegisterView(View):
         if smscode != redis_sms_code.decode():
             return HttpResponseBadRequest('短信验证码不一致')
         # 3.保存注册信息
-        # create_user 可以使用系统的方法来对密码进行加密
         try:
             user = User.objects.create_user(username=mobile,
                                             mobile=mobile,
@@ -61,7 +56,6 @@ class RegisterView(View):
         except DatabaseError as e:
             logger.error(e)
             return HttpResponseBadRequest('注册失败')
-
         from django.contrib.auth import login
         login(request, user)
         # 4.返回响应跳转到指定页面
@@ -74,7 +68,6 @@ class RegisterView(View):
 
 
 class ImageCodeView(View):
-
     def get(self,request):
         uuid=request.GET.get('uuid')
         #判断参数是否为None
@@ -89,7 +82,6 @@ class ImageCodeView(View):
 
 
 class SmsCodeView(View):
-
     def get(self,request):
         # 1.接收参数 （查询字符串的形式传递过来）
         mobile = request.GET.get('mobile')
@@ -115,7 +107,7 @@ class SmsCodeView(View):
         if redis_image_code.decode().lower() != image_code.lower():
             return JsonResponse({'code': RETCODE.IMAGECODEERR,'errmsg':'图片验证码错误'})
         # 3.生成短信验证码
-        sms_code= '%06d'%randint(0, 999999)
+        sms_code = '%06d'%randint(0, 999999)
         # 为了后期比对方便，我们可以将短信验证码记录到日志中
         logger.info(sms_code)
         # 4.保存短信验证码到redis中
@@ -123,29 +115,14 @@ class SmsCodeView(View):
         # 5.发送短信
         CCP().send_template_sms(mobile, [sms_code, 5], 1)
         # 6.返回响应
-        return JsonResponse({'code': RETCODE.OK, 'errmsg':'短信发送成功'})
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': '短信发送成功'})
 
 
 class LoginView(View):
-
     def get(self, request):
-
         return render(request, 'login.html')
 
     def post(self, request):
-        """
-        1.接收参数
-        2.参数的验证
-            2.1 验证手机号是否符合规则
-            2.2 验证密码是否符合规则
-        3.用户认证登录
-        4.状态的保持
-        5.根据用户选择的是否记住登录状态来进行判断
-        6.为了首页显示我们需要设置一些cookie信息
-        7.返回响应
-        :param request:
-        :return:
-        """
         # 1.接收参数
         mobile = request.POST.get('mobile')
         password = request.POST.get('password')
@@ -212,11 +189,9 @@ class LogoutView(View):
 class ForgetPasswordView(View):
 
     def get(self, request):
-
         return render(request, 'forget_password.html')
 
     def post(self, request):
-
         # 1.接收数据
         mobile = request.POST.get('mobile')
         password = request.POST.get('password')
@@ -258,7 +233,6 @@ class ForgetPasswordView(View):
             user.set_password(password)
             # 注意，保存用户信息
             user.save()
-
         # 6.进行页面跳转，跳转到登录页面
         response = redirect(reverse('users:login'))
         # 7.返回响应
@@ -266,11 +240,10 @@ class ForgetPasswordView(View):
 
 
 class UserCenterView(LoginRequiredMixin, View):
-
     def get(self, request):
         # 获得登录用户的信息
         user = request.user
-        #组织获取用户的信息
+        # 组织获取用户的信息
         context = {
             'username': user.username,
             'mobile': user.mobile,
@@ -280,7 +253,6 @@ class UserCenterView(LoginRequiredMixin, View):
         return render(request, 'center.html', context=context)
 
     def post(self, request):
-
         user = request.user
         # 1.接收参数
         username = request.POST.get('username', user.username)
@@ -300,23 +272,19 @@ class UserCenterView(LoginRequiredMixin, View):
         # 4.刷新当前页面（重定向操作）
         response = redirect(reverse('users:center'))
         response.set_cookie('username', user.username, max_age=14 * 3600 * 24)
-
         # 5.返回响应
         return response
 
 
 class WriteBlogView(LoginRequiredMixin, View):
-
     def get(self, request):
-
-        categories = ArticleCategory.objects.all() # 查询所有分类模型
+        categories = ArticleCategory.objects.all()  # 查询所有分类模型
         context = {
             'categories': categories
         }
         return render(request, 'write_blog.html', context=context)
 
     def post(self, request):
-
         # 1.接收数据
         avatar = request.FILES.get('avatar')
         title = request.POST.get('title')
@@ -325,7 +293,6 @@ class WriteBlogView(LoginRequiredMixin, View):
         summary = request.POST.get('summary')
         content = request.POST.get('content')
         user = request.user
-
         # 2.验证数据
         # 2.1 验证参数是否齐全
         if not all([avatar, title, category_id, summary, content]):

@@ -73,23 +73,14 @@ WSGI_APPLICATION = 'rango_blog.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/2.1/ref/settings/#databases
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',  # 数据库引擎
-        'HOST': '127.0.0.1',  # 数据库主机
-        'PORT': 3306,  # 数据库端口
-        'USER': 'rangoblog',  # 数据库用户名
-        'PASSWORD': '123456',  # 数据库用户密码
-        'NAME': 'blog'  # 数据库名字
+        'ENGINE': 'django.db.backends.mysql',  # Database engine
+        'HOST': '127.0.0.1',  # Database host
+        'PORT': 3306,  # Database port
+        'USER': 'rangoblog',  # database username
+        'PASSWORD': '123456',  # Database user password
+        'NAME': 'blog'  # Database name
     },
 }
 
@@ -131,22 +122,21 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
-# 静态资源路径
-
+# Static resource path
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR,'static'),
 ]
 
 # Redis Config
 CACHES = {
-    "default": { # deflaut
+    "default": {  # default
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://127.0.0.1:6379/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
-    "session": { # session
+    "session": {  # session
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://127.0.0.1:6379/1",
         "OPTIONS": {
@@ -154,7 +144,7 @@ CACHES = {
         }
     },
 }
-# session由数据库改为redis
+# Session changed from database to redis
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "session"
 
@@ -203,11 +193,11 @@ LOGGING = {
 
 AUTH_USER_MODEL = 'users.User'
 
-# 修改系统的未登录跳转连接
+# Modify the system's unregistered jump connection
 LOGIN_URL = '/login/'
 
-# 设置上传的图片 保存到media目录下
+# Set the uploaded picture and save it to the media directory
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
-# 设置图片访问的统一路由
+# Set up a unified route for image access
 MEDIA_URL = '/media/'

@@ -7,20 +7,20 @@ var vm = new Vue({
         show_menu:false,
         mobile:'',
         mobile_error:false,
-        mobile_error_message:'手机号错误',
+        mobile_error_message:'Phone number error',
         password:'',
         password_error:false,
-        password_error_message:'密码错误',
+        password_error_message:'wrong password',
         password2:'',
         password2_error:false,
-        password2_error_message:'密码不一致',
+        password2_error_message:'Inconsistent passwords',
         image_code:'',
         image_code_error:false,
-        image_code_error_message:'图片验证码错误',
+        image_code_error_message:'Image verification code error',
         sms_code:'',
         sms_code_error:false,
-        sms_code_error_message:'短信验证码错误',
-        sms_code_message:'点击获取验证码',
+        sms_code_error_message:'SMS verification code error',
+        sms_code_message:'Get SMS verification code',
         image_code_url:''
     },
     mounted(){
@@ -94,7 +94,6 @@ var vm = new Vue({
                 return;
             }
 
-
             // 校验参数，保证输入框有数据填写
             this.check_mobile();
             this.check_image_code();
@@ -102,7 +101,7 @@ var vm = new Vue({
             if (this.mobile_error == true || this.image_code_error == true) {
                 this.sending_flag = false;
                 this.sms_code_error=true;
-                this.sms_code_error_message='手机号或验证码错误'
+                this.sms_code_error_message='Incorrect phone number or verification code'
                 return;
             }
             this.sending_flag = true;
@@ -123,7 +122,7 @@ var vm = new Vue({
                                 // 如果计时器到最后, 清除计时器对象
                                 clearInterval(t);
                                 // 将点击获取验证码的按钮展示的文本回复成原始文本
-                                this.sms_code_message = '获取短信验证码';
+                                this.sms_code_message = 'Get SMS verification code';
                                 // 将点击按钮的onclick事件函数恢复回去
                                 this.sending_flag = false;
                             } else {
