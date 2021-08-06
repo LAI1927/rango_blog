@@ -58,7 +58,7 @@ def populate():
     i=0
     for _ in range(10):
         i=i+1
-        Article.objects.create(id=i,title='Python_test',avatar='article/20210805/IMG_0060_UNXwcCM.JPG',tags="Test",summary="This is for test",
+        Article.objects.create(id=i,title='Python_test',avatar='article/20210805/IMG_0069.JPG',tags="Test",summary="This is for test",
                             content="\n\n".join(fake.paragraphs(10)),author_id=1,category_id=1,total_views=20,comments_count=5)
 
     i=10
