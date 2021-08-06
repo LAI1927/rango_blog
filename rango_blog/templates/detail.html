@@ -4,15 +4,15 @@
     <meta charset="utf-8">
     <title> Rango Blog </title>
     {% load staticfiles %}
-    <!-- 引入bootstrap的css文件 -->
+    <!-- bootstrap css -->
     <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
-    <!--详情页面导入-->
+    <!--detail-->
     <script src="../static/ckeditor/ckeditor/plugins/prism/lib/prism/prism_patched.min.js"></script>
     <link rel="stylesheet" href="{% static 'prism/prism.css' %}">
-    <!--导入css-->
+    <!--css-->
     <link rel="stylesheet" href="{% static 'common/common.css' %}">
     <link rel="stylesheet" href="{% static 'common/jquery.pagination.css' %}">
-    <!-- 引入vuejs -->
+    <!-- vuejs -->
     <script type="text/javascript" src="{% static 'js/vue-2.5.16.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/axios-0.18.0.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
@@ -20,14 +20,14 @@
 
 <body>
 <div id="app">
-<!-- 定义导航栏 -->
+<!-- navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-        <!-- 导航栏商标 -->
+       
         <div>
             <a class="navbar-brand" href="{% url 'home:index' %}">Rango Blog</a>
         </div>
-        <!-- 分类 -->
+        <!-- category -->
         <div class="collapse navbar-collapse">
             <div>
                 <ul class="nav navbar-nav">
@@ -46,10 +46,10 @@
             </div>
         </div>
     </div>
-    <!--登录/个人中心-->
+    <!--login/center-->
     <div class="navbar-collapse">
         <ul class="nav navbar-nav">
-            <!-- 如果用户已经登录，则显示用户名下拉框 -->
+           
             <li class="nav-item dropdown" v-if="is_login">
                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" @click="show_menu_click">[[username]]</a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown" style="display: block" v-show="show_menu">
@@ -69,17 +69,17 @@
 <!-- content -->
 <div class="container">
     <div class="row">
-        <!--文章详情-->
+        <!--detail-->
         <div class="col-9">
-            <!-- 标题及作者 -->
+            <!-- author title -->
             <h1 class="mt-4 mb-4">{{ article.title }}</h1>
             <div class="alert alert-success"><div>Author: <span>{{ article.author.username }}</span></div><div>Views:  {{ article.total_views }}</div></div>
-            <!-- 文章正文 -->
+            <!-- content -->
             <div class="col-12" style="word-break: break-all;word-wrap: break-word;">
                 <p><p>{{ article.content|safe }}</p></p>
             </div>
             <br>
-            <!-- 发表评论 -->
+            <!-- comment -->
             <hr>
             <br>
             <h5 class="row justify-content-center" v-show="!is_login">Please&nbsp<a href="login.html">Login&nbsp</a>to comment</h5>
@@ -96,12 +96,12 @@
                         </div>
                     </div>
                 </div>
-                    <!-- 提交按钮 -->
+                    <!-- submit -->
                     <button type="submit" class="btn btn-primary ">Submit</button>
                 </form>
             </div>
             <br>
-            <!-- 显示评论 -->
+            <!-- show comment -->
             <h4>There are {{ total_count }} comments</h4>
             <div class="row">
                 {% for comment in comments %}
@@ -120,7 +120,7 @@
             </div>
 
         </div>
-        <!-- 推荐 -->
+        <!-- recommend -->
         <div class="col-3 mt-4" id="sidebar" class="sidebar">
             <div class="sidebar__inner">
                     <h4><strong>Recommended reading</strong></h4>
@@ -137,7 +137,7 @@
 <!-- Footer -->
 <footer class="py-3 bg-dark" id="footer">
     <div class="container">
-        <h5 class="m-0 text-center text-white">This Website is developed by YHJS for COMPSCI5012 Internet Technology Course</h5>
+        <h5 class="m-0 text-center text-white">The Website is developed by YHJS for COMPSCI5012</h5>
     </div>
 </footer>
 </div>
@@ -146,7 +146,7 @@
 <script type="text/javascript" src="{% static 'ckeditor/ckeditor-init.js' %}" data-ckeditor-basepath="{% static 'ckeditor/ckeditor/' %}" id="ckeditor-init-script"></script>
 <script type="text/javascript" src="{% static 'ckeditor/ckeditor/ckeditor.js' %}"></script>
 
-<!-- 引入js -->
+<!-- js -->
 <script type="text/javascript" src="{% static 'js/host.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/common.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/detail.js' %}"></script>

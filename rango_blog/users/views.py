@@ -23,44 +23,44 @@ class RegisterView(View):
         return render(request, 'register.html')
 
     def post(self, request):
-        # 1.接收数据
+        # 1. Receive data
         mobile = request.POST.get('mobile')
         password = request.POST.get('password')
         password2 = request.POST.get('password2')
         smscode = request.POST.get('sms_code')
-        # 2.验证数据
-        #     2.1 参数是否齐全
+        # 2.verify the data
+        # If the parameters complete
         if not all([mobile, password, password2, smscode]):
-            return HttpResponseBadRequest('缺少必要的参数')
-        #     2.2 手机号的格式是否正确
+            return HttpResponseBadRequest('Missing required parameters')
+        # Is the format of the phone number correct?
         if not re.match(r'^1[3-9]\d{9}$', mobile):
-            return HttpResponseBadRequest('手机号不符合规则')
-        #     2.3 密码是否符合格式
+            return HttpResponseBadRequest('Mobile phone number does not meet the rules')
+        # Whether the password conforms to the format
         if not re.match(r'^[0-9A-Za-z]{8,20}$', password):
-            return HttpResponseBadRequest('请输入8-20位密码，密码是数字，字母')
-        #     2.4 密码和确认密码要一致
+            return HttpResponseBadRequest('Please enter 8-20 digits password, the password is numbers and letters')
+        # Password and confirm password must be the same
         if password != password2:
-            return HttpResponseBadRequest('两次密码不一致')
-        #     2.5 短信验证码是否和redis中的一致
+            return HttpResponseBadRequest('The two passwords are inconsistent')
+        # Is the SMS verification code the same as that in redis
         redis_conn = get_redis_connection('default')
         redis_sms_code = redis_conn.get('sms:%s' % mobile)
         if redis_sms_code is None:
-            return HttpResponseBadRequest('短信验证码已过期')
+            return HttpResponseBadRequest('SMS verification code has expired')
         if smscode != redis_sms_code.decode():
-            return HttpResponseBadRequest('短信验证码不一致')
-        # 3.保存注册信息
+            return HttpResponseBadRequest('Inconsistent SMS verification codes')
+        # 3.Save registration information
         try:
             user = User.objects.create_user(username=mobile,
                                             mobile=mobile,
                                             password=password)
         except DatabaseError as e:
             logger.error(e)
-            return HttpResponseBadRequest('注册失败')
+            return HttpResponseBadRequest('registration failed')
         from django.contrib.auth import login
         login(request, user)
-        # 4.返回响应跳转到指定页面
+        # 4.Return the response and jump to the specified page
         response = redirect(reverse('home:index'))
-        # 设置cookie信息，以方便首页中 用户信息展示的判断和用户信息的展示
+        # Set cookie information to facilitate the judgment of user information display on the homepage and the display of user information
         response.set_cookie('is_login', True)
         response.set_cookie('username', user.username, max_age=7 * 24 * 3600)
 
@@ -68,54 +68,53 @@ class RegisterView(View):
 
 
 class ImageCodeView(View):
-    def get(self,request):
-        uuid=request.GET.get('uuid')
-        #判断参数是否为None
+    def get(self, request):
+        uuid = request.GET.get('uuid')
+        # Determine whether the parameter is None
         if uuid is None:
-            return HttpResponseBadRequest('请求参数错误')
-        # 获取验证码内容和验证码图片二进制数据
+            return HttpResponseBadRequest('Request parameter error')
+        # Obtain verification code content and verification code image binary data
         text, image = captcha.generate_captcha()
         redis_conn = get_redis_connection('default')
         redis_conn.setex('img:%s' % uuid, 300, text)
-        # 返回响应，将生成的图片以content_type为image/jpeg的形式返回给请求
+        # Return the response, and return the generated image to the request in the form of content_type as image/jpeg
         return HttpResponse(image, content_type='image/jpeg')
 
 
 class SmsCodeView(View):
-    def get(self,request):
-        # 1.接收参数 （查询字符串的形式传递过来）
+    def get(self, request):
+        # 1.Receive parameters (passed in the form of query string)
         mobile = request.GET.get('mobile')
         image_code = request.GET.get('image_code')
         uuid = request.GET.get('uuid')
-        # 2.参数的验证
-        #     2.1 验证参数是否齐全
-        if not all([mobile,image_code,uuid]):
-            return JsonResponse({'code': RETCODE.NECESSARYPARAMERR,'errmsg':'缺少必要的参数'})
-        #     2.2 图片验证码的验证
-        #         连接redis，获取redis中的图片验证码
+        # 2.Verification of parameters
+        # Verify that the parameters are complete
+        if not all([mobile, image_code, uuid]):
+            return JsonResponse({'code': RETCODE.NECESSARYPARAMERR, 'errmsg': 'Missing required parameters'})
+        # Image verification code verification
+        # Connect to redis to get the image verification code in redis
         redis_conn = get_redis_connection('default')
         redis_image_code = redis_conn.get('img:%s'%uuid)
-        #         判断图片验证码是否存在
+        # Determine whether the image verification code exists
         if redis_image_code is None:
-            return JsonResponse({'code': RETCODE.IMAGECODEERR,'errmsg':'图片验证码已过期'})
-        #         如果图片验证码未过期，我们获取到之后就可以删除图片验证码
+            return JsonResponse({'code': RETCODE.IMAGECODEERR, 'errmsg': 'Image verification code has expired'})
+        # If the image verification code has not expired, we can delete the image verification code after we obtain it
         try:
             redis_conn.delete('img:%s'%uuid)
         except Exception as e:
             logger.error(e)
-        #         比对图片验证码, 注意大小写的问题， redis的数据是bytes类型
+        # Compare the image verification code, pay attention to the case, redis data is of type bytes
         if redis_image_code.decode().lower() != image_code.lower():
-            return JsonResponse({'code': RETCODE.IMAGECODEERR,'errmsg':'图片验证码错误'})
-        # 3.生成短信验证码
+            return JsonResponse({'code': RETCODE.IMAGECODEERR, 'errmsg': 'Image verification code error'})
+        # 3.Generate SMS verification code
         sms_code = '%06d'%randint(0, 999999)
-        # 为了后期比对方便，我们可以将短信验证码记录到日志中
         logger.info(sms_code)
-        # 4.保存短信验证码到redis中
+        # 4.Save the SMS verification code to redis
         redis_conn.setex('sms:%s'%mobile, 300, sms_code)
-        # 5.发送短信
+        # 5.send messages
         CCP().send_template_sms(mobile, [sms_code, 5], 1)
-        # 6.返回响应
-        return JsonResponse({'code': RETCODE.OK, 'errmsg': '短信发送成功'})
+        # 6.Return response
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'SMS sent successfully'})
 
 
 class LoginView(View):
@@ -123,66 +122,54 @@ class LoginView(View):
         return render(request, 'login.html')
 
     def post(self, request):
-        # 1.接收参数
+        # 1.Receive parameters
         mobile = request.POST.get('mobile')
         password = request.POST.get('password')
         remember = request.POST.get('remember')
-        # 2.参数的验证
-        #     2.1 验证手机号是否符合规则
+        # 2.Verification of parameters
+        # Verify that the phone number complies with the rules
         if not re.match(r'^1[3-9]\d{9}$', mobile):
-            return HttpResponseBadRequest('手机号不符合规则')
-        #     2.2 验证密码是否符合规则
+            return HttpResponseBadRequest('Mobile phone number does not meet the rules')
+        # Verify that the password complies with the rules
         if not re.match(r'^[a-zA-Z0-9]{8,20}$', password):
-            return HttpResponseBadRequest('密码不符合规则')
-        # 3.用户认证登录
-        # 采用系统自带的认证方法进行认证
-        # 如果我们的用户名和密码正确，会返回user
-        # 如果我们的用户名或密码不正确，会返回None
+            return HttpResponseBadRequest('Password does not meet the rules')
+        # 3.User authentication login
         from django.contrib.auth import authenticate
-        # 默认的认证方法是 针对于 username 字段进行用户名的判断
-        # 当前的判断信息是 手机号，所以我们需要修改一下认证字段
-        # 我们需要到User模型中进行修改，等测试出现问题的时候，我们再修改
         user = authenticate(mobile=mobile, password=password)
-
         if user is None:
             return HttpResponseBadRequest('用户名或密码错误')
-        # 4.状态的保持
+        # 4.State maintenance
         from django.contrib.auth import login
         login(request, user)
-        # 5.根据用户选择的是否记住登录状态来进行判断
-        # 6.为了首页显示我们需要设置一些cookie信息
-
-        # 根据next参数来进行页面的跳转
+        # 5.Judge according to whether the user chooses to remember the login status
+        # 6.In order to display on the homepage we need to set some cookie information
         next_page = request.GET.get('next')
         if next_page:
             response = redirect(next_page)
         else:
             response = redirect(reverse('home:index'))
 
-        if remember != 'on':  # 没有记住用户信息
-            # 浏览器关闭之后
+        if remember != 'on':
             request.session.set_expiry(0)
             response.set_cookie('is_login', True)
             response.set_cookie('username', user.username, max_age=14 * 24 * 3600)
-        else:  # 记住用户信息
-            # 默认是记住 2周
+        else:  # Remember user information
             request.session.set_expiry(None)
             response.set_cookie('is_login', True, max_age=14 * 24 * 3600)
             response.set_cookie('username', user.username, max_age=14 * 24 * 3600)
-
-        # 7.返回响应
+        # 7.Return response
         return response
 
 
 class LogoutView(View):
 
     def get(self, request):
-        # 1.session数据清除
+        # 1.session data clear
         logout(request)
-        # 2.删除部分cookie数据
+        # 2.Delete some cookie data
         response = redirect(reverse('home:index'))
         response.delete_cookie('is_login')
-        # 3.跳转到首页
+        # 3.Jump to homepage
         return response
 
 
@@ -192,36 +179,31 @@ class ForgetPasswordView(View):
         return render(request, 'forget_password.html')
 
     def post(self, request):
-        # 1.接收数据
+        # 1.Receive data
         mobile = request.POST.get('mobile')
         password = request.POST.get('password')
         password2 = request.POST.get('password2')
         smscode = request.POST.get('sms_code')
-        # 2.验证数据
-        #     2.1 判断参数是否齐全
+        # 2.verify the data
         if not all([mobile, password, password2, smscode]):
-            return HttpResponseBadRequest('参数不全')
-        #     2.2 手机号是否符合格则
+            return HttpResponseBadRequest('Incomplete parameters')
         if not re.match(r'^1[3-9]\d{9}$', mobile):
-            return HttpResponseBadRequest('手机号不符合格则')
-        #     2.3 判断密码是否符合格则
+            return HttpResponseBadRequest('Mobile phone number does not meet the criteria')
         if not re.match(r'^[0-9A-Za-z]{8,20}$', password):
-            return HttpResponseBadRequest('密码不符合格则')
-        #     2.4 判断确认密码和密码是否一致
+            return HttpResponseBadRequest('Password does not meet the rules')
         if password2 != password:
-            return HttpResponseBadRequest('密码不一致')
-        #     2.5 判断短信验证码是否正确
+            return HttpResponseBadRequest('Inconsistent passwords')
         redis_conn = get_redis_connection('default')
         redis_sms_code = redis_conn.get('sms:%s' % mobile)
         if redis_sms_code is None:
-            return HttpResponseBadRequest('短信验证码已过期')
+            return HttpResponseBadRequest('SMS verification code has expired')
         if redis_sms_code.decode() != smscode:
-            return HttpResponseBadRequest('短信验证码错误')
-        # 3.根据手机号进行用户信息的查询
+            return HttpResponseBadRequest('SMS verification code error')
+        # 3.Query user information based on mobile phone number
         try:
             user = User.objects.get(mobile=mobile)
         except User.DoesNotExist:
-            # 5.如果手机号没有查询出用户信息，则进行新用户的创建
+            # 5.If the mobile phone number does not find out the user information, create a new user
             try:
                 User.objects.create_user(username=mobile,
                                          mobile=mobile,
@@ -229,13 +211,11 @@ class ForgetPasswordView(View):
             except Exception:
                 return HttpResponseBadRequest('修改失败，请稍后再试')
         else:
-            # 4.如果手机号查询出用户信息则进行用户密码的修改
             user.set_password(password)
-            # 注意，保存用户信息
             user.save()
-        # 6.进行页面跳转，跳转到登录页面
+        # 6.Jump to the page, jump to the login page
         response = redirect(reverse('users:login'))
-        # 7.返回响应
+        # 7.Return response
         return response
 
 
@@ -254,11 +234,11 @@ class UserCenterView(LoginRequiredMixin, View):
 
     def post(self, request):
         user = request.user
-        # 1.接收参数
+        # 1.Receive parameters
         username = request.POST.get('username', user.username)
         user_desc = request.POST.get('desc', user.user_desc)
         avatar = request.FILES.get('avatar')
-        # 2.将参数保存起来
+        # 2.Save the parameters
         try:
             user.username = username
             user.user_desc = user_desc
@@ -267,25 +247,25 @@ class UserCenterView(LoginRequiredMixin, View):
             user.save()
         except Exception as e:
             logger.error(e)
-            return HttpResponseBadRequest('修改失败，请稍后再试')
-        # 3.更新cookie中的username信息
-        # 4.刷新当前页面（重定向操作）
+            return HttpResponseBadRequest('Edit failed, please try again later')
+        # 3.Update the username information in the cookie
+        # 4.Refresh the current page (redirect operation)
         response = redirect(reverse('users:center'))
         response.set_cookie('username', user.username, max_age=14 * 3600 * 24)
-        # 5.返回响应
+        # 5.Return response
         return response
 
 
 class WriteBlogView(LoginRequiredMixin, View):
     def get(self, request):
-        categories = ArticleCategory.objects.all()  # 查询所有分类模型
+        categories = ArticleCategory.objects.all()  # Query all classification models
         context = {
             'categories': categories
         }
         return render(request, 'write_blog.html', context=context)
 
     def post(self, request):
-        # 1.接收数据
+        # 1.Receive data
         avatar = request.FILES.get('avatar')
         title = request.POST.get('title')
         category_id = request.POST.get('category')
@@ -293,16 +273,14 @@ class WriteBlogView(LoginRequiredMixin, View):
         summary = request.POST.get('summary')
         content = request.POST.get('content')
         user = request.user
-        # 2.验证数据
-        # 2.1 验证参数是否齐全
+        # 2.verify the data
         if not all([avatar, title, category_id, summary, content]):
-            return HttpResponseBadRequest('参数不全')
-        # 2.2 判断分类id
+            return HttpResponseBadRequest('Incomplete parameters')
         try:
             category = ArticleCategory.objects.get(id=category_id)
         except ArticleCategory.DoesNotExist:
-            return HttpResponseBadRequest('没有此分类')
-        # 3.数据入库
+            return HttpResponseBadRequest('No such category')
+        # 3.Data storage
         try:
             article = Article.objects.create(
                 author=user,
@@ -315,6 +293,6 @@ class WriteBlogView(LoginRequiredMixin, View):
             )
         except Exception as e:
             logger.error(e)
-            return HttpResponseBadRequest('发布失败，请稍后再试')
-        # 4.跳转到指定页面（暂时首页）
+            return HttpResponseBadRequest('Publish failed, please try again later')
+        # 4.Jump to the specified page (temporary home page)
         return redirect(reverse('home:index'))
